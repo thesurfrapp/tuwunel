@@ -71,7 +71,10 @@ rust_nightly="${rust_nightly:-nightly}"
 # by default for all callers to ensure the msrv is used instead of latest
 # stable. see bake.hcl
 toolchain_toml="$docker_dir/../rust-toolchain.toml"
-rust_msrv=$(grep "channel = " "$toolchain_toml" | cut -d'=' -f2 | sed 's/\s"\|"$//g')
+# cut on the quote rather than sed: `\s"\|"$` relies on GNU alternation, which
+# BSD sed (macOS) does not support, leaving the value as ` "1.95.0"` — quotes
+# included — which then fails rustup and bake's target-name charset.
+rust_msrv=$(grep -m1 "channel = " "$toolchain_toml" | cut -d'"' -f2)
 
 # Package metadata for OCI image labels/annotations. Mirrors the priority
 # used by src/core/info/version.rs::semantic(): `git describe --tags` falling
